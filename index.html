@@ -14,6 +14,8 @@
 <script charset="utf-8" src="assets/scripts/cuber.min.js"></script>
 
 </head>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
 <body>
 
 <div style="text-align:center;clear:both;">
@@ -58,6 +60,12 @@
 <script charset="utf-8" src="assets/scripts/main3.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script type="text/javascript">
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js")
+            .then(() => {
+                console.log("PWA enabled");
+            });
+    }
 	function getUrlParam(name) {
     var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
     var r = window.location.search.substr(1).match(reg);
