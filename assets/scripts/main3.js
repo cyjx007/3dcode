@@ -1,9 +1,18 @@
 var motion;
 var startTime = 0;
-var isMobile = dataStore['fpdoodle'] == '1';
 var scopedCheckQueue;
 var ua = navigator.userAgent,
     isIe = ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1;
+// Robust mobile detection.
+// The original code only enabled the mobile layout when the host page passed
+// `fpdoodle=1` (iframe embed). When opened directly on a phone the page fell
+// back to the desktop layout, which is why the cube looked off-centre and the
+// UI was cramped. We now also sniff the UA / touch capabilities.
+var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+var isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+var isMobile = dataStore['fpdoodle'] == '1' || isMobileUA ||
+    (isTouchDevice && Math.min(window.innerWidth, window.innerHeight) <= 600);
 var useLockedControls = true,
     controls = useLockedControls ? ERNO.Locked : ERNO.Freeform;
 window.cube = new ERNO.Cube({
@@ -65,6 +74,30 @@ if (isMobile) {
   cube.position.y = 410;
   cube.position.z = -850;
 }
+
+// 视口自适应：竖屏手机上按原来的相机距离会把方块撑出屏幕，
+// 这里根据宽高比把相机往后拉，保证方块完整可见。
+function fitCubeToViewport() {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  if (!w || !h) {
+    return;
+  }
+  var aspect = w / h;
+  var fovRad = cube.camera.fov * Math.PI / 180;
+  // 方块旋转后的最大投影范围约为边长的 1.45 倍
+  var extent = cube.size * 1.45;
+  var margin = isMobile ? 1.28 : 1.0;
+  var dist = (extent * margin) /
+      (2 * Math.tan(fovRad / 2) * Math.min(1, aspect));
+  cube.camera.position.z = Math.max(2000, dist);
+  cube.camera.updateProjectionMatrix();
+}
+fitCubeToViewport();
+window.addEventListener('resize', fitCubeToViewport);
+window.addEventListener('orientationchange', function() {
+  window.setTimeout(fitCubeToViewport, 250);
+});
 cube.mouseControlsEnabled = false;
 cube.keyboardControlsEnabled = false;
 cube.twistCountDown = 0;
@@ -202,6 +235,13 @@ function startInteractiveCube() {
     }
     postParentMessage({'moves': cube.moveCounter});
     if (cube.isSolved()) {
+      // When the game layer (game.js) is present it owns win handling: it can
+      // tell a real solve apart from a "还原" (reset) and it supports starting
+      // another round without reloading the page.
+      if (typeof window.onCubeSolved === 'function') {
+        window.onCubeSolved();
+        return;
+      }
       setTimeout(function() {
         cube.hideInvisibleFaces = false;
         cube.showIntroverts();
@@ -228,6 +268,10 @@ function startInteractiveCube() {
   postParentMessage({'controls': 1});
   cube.mouseControlsEnabled = true;
   cube.keyboardControlsEnabled = true;
+  // Let the game layer (scramble / reset / timer) know the intro has finished.
+  if (typeof window.onCubeReady === 'function') {
+    window.onCubeReady();
+  }
 }
 function checkQueue(callback) {
   if (cube.twistQueue.history.length - cube.twistCountDown == 0) {

@@ -1,0 +1,553 @@
+/* ==========================================================================
+   game.css — 打乱 / 还原 / 计时 / 通关弹窗
+   与原有 Google Doodle 风格保持一致：极简、圆角、魔方配色点缀
+   ========================================================================== */
+
+/* 桌面端把原有的 uipanel 上移，避免与新控制栏重叠 */
+#uipanel {
+  bottom: 96px;
+}
+
+/* ------------------------------- 控制栏 ---------------------------------- */
+
+#gamebar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(0);
+  z-index: 60;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 7px 8px 7px 14px;
+  border-radius: 999px;
+
+  background: rgba(18, 18, 22, 0.66);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+  font-family: "Rubik One", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  color: #fff;
+
+  line-height: 1;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-animation: gamebar-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: gamebar-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@-webkit-keyframes gamebar-in {
+  from { opacity: 0; -webkit-transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; -webkit-transform: translateX(-50%) translateY(0); }
+}
+@keyframes gamebar-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 计时 / 步数 */
+.game-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#gametimer {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  min-width: 74px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55); /* 待机（未开始计时）时偏暗 */
+  transition: color 220ms ease;
+}
+#gametimer.running {
+  color: #fff;
+}
+#gametimer.done {
+  color: #ffd23f;
+}
+
+#gamemoves {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+  min-width: 34px;
+  text-align: center;
+}
+#gamemoves b {
+  font-size: 15px;
+  color: #fff;
+}
+
+/* 分隔线 */
+.game-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.16);
+  margin: 0 3px;
+}
+
+/* 按钮 */
+.game-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+
+  transition: background 160ms ease, transform 120ms ease, opacity 200ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+.game-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.game-btn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.3);
+}
+.game-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+/* 打乱：魔方红 */
+#scramblebtn {
+  background: linear-gradient(180deg, #e8553f, #d0392a);
+  box-shadow: 0 3px 10px rgba(208, 57, 42, 0.4);
+}
+#scramblebtn:hover {
+  background: linear-gradient(180deg, #ef6450, #dc4230);
+}
+
+/* 还原：魔方蓝 */
+#resetbtn {
+  background: linear-gradient(180deg, #4f8ff7, #2f6fe0);
+  box-shadow: 0 3px 10px rgba(47, 111, 224, 0.4);
+}
+#resetbtn:hover {
+  background: linear-gradient(180deg, #619df9, #3b7ceb);
+}
+
+.game-btn[disabled],
+.game-btn[aria-disabled="true"] {
+  opacity: 0.42;
+  cursor: default;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 窄屏收紧一点（控制栏现在有 4 个按钮，需要更紧凑） */
+@media (max-width: 400px) {
+  #gamebar {
+    gap: 4px;
+    padding: 6px 7px 6px 10px;
+  }
+  .game-btn {
+    padding: 8px 9px;
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+  }
+  #gametimer {
+    font-size: 14px;
+    min-width: 58px;
+  }
+  #gamemoves {
+    min-width: 24px;
+    font-size: 11px;
+  }
+  #gamemoves b {
+    font-size: 13px;
+  }
+  .game-divider {
+    margin: 0 1px;
+  }
+  .think-ico {
+    display: none;
+  }
+}
+
+/* ------------------------------ 通关弹窗 --------------------------------- */
+
+#winoverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background: rgba(8, 8, 12, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 260ms ease, visibility 0s linear 260ms;
+
+  font-family: "Rubik One", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  touch-action: manipulation;
+}
+#winoverlay.show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 260ms ease, visibility 0s linear 0s;
+}
+
+.wincard {
+  width: min(340px, 100%);
+  box-sizing: border-box;
+  padding: 26px 24px 22px;
+  border-radius: 22px;
+  text-align: center;
+  line-height: 1.4;
+
+  background: #17171c;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+
+  transform: scale(0.9) translateY(14px);
+  opacity: 0;
+  transition: transform 320ms cubic-bezier(0.22, 1.2, 0.36, 1), opacity 260ms ease;
+}
+#winoverlay.show .wincard {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.win-emoji {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.win-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  margin-bottom: 18px;
+}
+
+.win-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.win-stat {
+  flex: 1 1 0;
+  padding: 12px 6px 11px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+.win-stat-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+}
+.win-stat-value {
+  display: block;
+  font-size: 21px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.win-stat-value.time { color: #ffd23f; }
+.win-stat-value.moves { color: #4f8ff7; }
+
+.win-buttons {
+  display: flex;
+  gap: 10px;
+}
+.win-buttons .game-btn {
+  flex: 1 1 0;
+  padding: 13px 10px;
+  font-size: 14.5px;
+}
+#playagainbtn {
+  background: linear-gradient(180deg, #e8553f, #d0392a);
+  box-shadow: 0 4px 14px rgba(208, 57, 42, 0.42);
+}
+#playagainbtn:hover {
+  background: linear-gradient(180deg, #ef6450, #dc4230);
+}
+#closewinbtn {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+#closewinbtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* 小屏弹窗收紧 */
+@media (max-height: 560px) {
+  .wincard { padding: 20px 18px 18px; }
+  .win-emoji { font-size: 32px; }
+  .win-title { font-size: 19px; margin-bottom: 14px; }
+  .win-stats { margin-bottom: 16px; }
+}
+
+/* 深色渐变背景（移动端）下控制栏保持可读 */
+.mobile #gamebar {
+  background: rgba(10, 10, 14, 0.6);
+}
+
+/* ==========================================================================
+   思考 / 教学
+   ========================================================================== */
+
+/* 思考：魔方黄 */
+#thinkbtn {
+  background: linear-gradient(180deg, #ffd23f, #f0a800);
+  color: #3d2b00;
+  box-shadow: 0 3px 10px rgba(240, 168, 0, 0.42);
+}
+#thinkbtn:hover {
+  background: linear-gradient(180deg, #ffdb5c, #f7b412);
+}
+.think-ico {
+  margin-right: 3px;
+}
+
+/* 教学：可切换的描边按钮 */
+.game-btn.ghost {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.game-btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+#teachbtn.on {
+  background: linear-gradient(180deg, #37d67a, #22a85c);
+  color: #04240f;
+  box-shadow: 0 3px 10px rgba(34, 168, 92, 0.45);
+}
+#teachbtn.on:hover {
+  background: linear-gradient(180deg, #46e189, #28b865);
+}
+
+/* ------------------------------ 提示面板 --------------------------------- */
+
+#hintpanel {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 14px);
+  z-index: 55;
+
+  width: min(92vw, 420px);
+  max-height: 48vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+
+  padding: 13px 15px 12px;
+  border-radius: 18px;
+
+  background: rgba(20, 21, 26, 0.86);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.46),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+
+  color: #f3f5f9;
+  font-family: "Rubik One", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: left;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#hintpanel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.hint-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.hint-stage {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffd23f;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hint-progress {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.hint-close {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  margin: 0 0 0 auto;
+  cursor: pointer;
+  flex: 0 0 auto;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 17px;
+  line-height: 1;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.hint-close:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.hint-strip {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 10px;
+  height: 4px;
+}
+.hint-strip i {
+  flex: 1 1 0;
+  min-width: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 220ms ease, opacity 220ms ease;
+}
+.hint-strip i.done {
+  background: rgba(55, 214, 122, 0.75);
+}
+.hint-strip i.cur {
+  background: #ffd23f;
+  box-shadow: 0 0 8px rgba(255, 210, 63, 0.6);
+}
+.hint-strip i.peek {
+  background: rgba(255, 210, 63, 0.42);
+}
+
+.hint-moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  min-height: 30px;
+  align-items: center;
+}
+.hint-move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 9px;
+  background: rgba(255, 210, 63, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 210, 63, 0.42);
+  color: #ffd23f;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hint-done {
+  color: #37d67a;
+  font-weight: 700;
+}
+
+.hint-why {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 11px;
+  word-break: break-word;
+}
+
+.hint-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.hint-foot .game-btn {
+  font-size: 12.5px;
+  padding: 8px 14px;
+}
+
+/* 窄屏收紧 */
+@media (max-width: 380px) {
+  #hintpanel {
+    width: 94vw;
+    padding: 11px 12px 10px;
+    font-size: 12.5px;
+  }
+  .hint-stage { font-size: 14px; }
+  .hint-move { min-width: 27px; height: 27px; font-size: 13.5px; padding: 0 7px; }
+  .hint-why { font-size: 12.5px; }
+  .hint-foot .game-btn { font-size: 11.5px; padding: 7px 11px; }
+}
+
+/* 矮屏：面板贴着控制栏，避免超出视口 */
+@media (max-height: 560px) {
+  #hintpanel {
+    max-height: 40vh;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+}

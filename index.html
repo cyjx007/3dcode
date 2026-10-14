@@ -1,56 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>3D cube</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="cube.png">
+<link rel="shortcut icon" href="cube.png">
+<link rel="apple-touch-icon" href="cube.png">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="3D魔方">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Styles -->
 <link rel="stylesheet" type="text/css" href="assets/styles/cube.css">
 <link rel="stylesheet" type="text/css" href="assets/styles/doodle2.css">
 <link rel="stylesheet" type="text/css" href="assets/styles/certificate2.css">
+<link rel="stylesheet" type="text/css" href="assets/styles/game.css">
 
-<!-- compiled & minified cube code -->
+<!-- Core cube scripts -->
 <script charset="utf-8" src="assets/scripts/tween.r12.js"></script>
 <script charset="utf-8" src="assets/scripts/three.js"></script>
 <script charset="utf-8" src="assets/scripts/cuber.min.js"></script>
-
 </head>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000000">
 <body>
-
-<div style="text-align:center;clear:both;">
-</div>
 
 <div id="bg"></div>
 <div id="container"></div>
 <div id="uipanel" class="fadeTransition">
   <div id="movecounter">0</div>
   <div id="buttonpanel">
-	<div id="sharebubble" class="fadeTransition" style="opacity:0">
-	  <input id="shareshortlink" type="text" value="google.com/doodles" readonly/>
-	  <div id="sharegplus" class="bubbleicon SPRITE_google_plus_64_2x"></div>
-	  <div id="sharefacebook" class="bubbleicon SPRITE_facebook_64_2x"></div>
-	  <div id="sharetwitter" class="bubbleicon SPRITE_twitter_64_2x"></div>
-	  <div id="shareemail" class="bubbleicon SPRITE_email_64_2x"></div>
-	</div>
-	<div id="uibuttons">
-	  <div id="sharebutton" class="bubbleicon SPRITE_share_64_2x"></div>
-	  <div id="helpbutton" class="bubbleicon SPRITE_help_64_2x"></div>
-	  <div id="searchbutton" class="bubbleicon SPRITE_search_64_2x"></div>
-	</div>
+    <div id="sharebubble" class="fadeTransition" style="opacity:0">
+      <input id="shareshortlink" type="text" value="google.com/doodles" readonly/>
+      <div id="sharegplus" class="bubbleicon SPRITE_google_plus_64_2x"></div>
+      <div id="sharefacebook" class="bubbleicon SPRITE_facebook_64_2x"></div>
+      <div id="sharetwitter" class="bubbleicon SPRITE_twitter_64_2x"></div>
+      <div id="shareemail" class="bubbleicon SPRITE_email_64_2x"></div>
+    </div>
+    <div id="uibuttons">
+      <div id="sharebutton" class="bubbleicon SPRITE_share_64_2x"></div>
+      <div id="helpbutton" class="bubbleicon SPRITE_help_64_2x"></div>
+      <div id="searchbutton" class="bubbleicon SPRITE_search_64_2x"></div>
+    </div>
   </div>
   <div id="helpbubble" class="bubble" style="display:none">
-	<span class="pointerup SPRITE_carrot_grey_up_2x"></span>
-	<div id="helpimage" class="one"></div>
-	<div id="helptext" class="helptext"></div>
-	<div id="helpnext" class="helptext"></div>
-	<span class="pointerdown SPRITE_carrot_down_2x"></span><br>
+    <span class="pointerup SPRITE_carrot_grey_up_2x"></span>
+    <div id="helpimage" class="one"></div>
+    <div id="helptext" class="helptext"></div>
+    <div id="helpnext" class="helptext"></div>
+    <span class="pointerdown SPRITE_carrot_down_2x"></span><br>
   </div>
 </div>
+
+<!-- 打乱 / 还原 / 计时 控制栏 -->
+<div id="gamebar">
+  <span id="gametimer" class="game-stat">00:00.0</span>
+  <span id="gamemoves" class="game-stat"><b>0</b> 步</span>
+  <span class="game-divider"></span>
+  <button id="scramblebtn" class="game-btn" type="button">打乱</button>
+  <button id="resetbtn" class="game-btn" type="button">还原</button>
+  <button id="thinkbtn" class="game-btn" type="button"><span class="think-ico">💡</span>思考</button>
+  <button id="teachbtn" class="game-btn ghost" type="button" aria-pressed="false">教学</button>
+</div>
+
+<!-- 思考 / 教学 提示面板 -->
+<div id="hintpanel">
+  <div class="hint-head">
+    <span id="hintstage" class="hint-stage">计算中…</span>
+    <span id="hintprogress" class="hint-progress"></span>
+    <button id="hintclose" class="hint-close" type="button" aria-label="关闭">&times;</button>
+  </div>
+  <div id="hintstrip" class="hint-strip"></div>
+  <div id="hintmoves" class="hint-moves"></div>
+  <div id="hintwhy" class="hint-why"></div>
+  <div class="hint-foot">
+    <button id="hintdemo" class="game-btn ghost" type="button">演示这一步</button>
+    <button id="hintnext" class="game-btn ghost" type="button">下一步 &rsaquo;</button>
+  </div>
+</div>
+
+<!-- 通关弹窗（无需刷新即可继续玩） -->
+<div id="winoverlay">
+  <div class="wincard">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title">复原成功</div>
+    <div class="win-stats">
+      <div class="win-stat">
+        <span class="win-stat-label">用时</span>
+        <span id="wintime" class="win-stat-value time">00:00.0</span>
+      </div>
+      <div class="win-stat">
+        <span class="win-stat-label">步数</span>
+        <span id="winmoves" class="win-stat-value moves">0</span>
+      </div>
+    </div>
+    <div class="win-buttons">
+      <button id="playagainbtn" class="game-btn" type="button">再来一局</button>
+      <button id="closewinbtn" class="game-btn" type="button">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- IE fallback + device interaction scripts -->
 <script charset="utf-8" src="assets/scripts/iecss3d.js"></script>
 <script charset="utf-8" src="assets/scripts/ierenderer.js"></script>
 <script charset="utf-8" src="assets/scripts/deviceMotion.js"></script>
 <script charset="utf-8" src="assets/scripts/locked.js"></script>
+
 <!-- Certificate js -->
 <script charset="utf-8" src="assets/scripts/textBox.js"></script>
 <script charset="utf-8" src="assets/scripts/ResizeableTextBox.3.js"></script>
@@ -58,50 +118,138 @@
 <script charset="utf-8" src="assets/scripts/frames.js"></script>
 <script charset="utf-8" src="assets/scripts/certificate.js"></script>
 <script charset="utf-8" src="assets/scripts/main3.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<!-- 游戏层：求解器 + 打乱 / 还原 / 计时 / 通关弹窗 / 教学思考 -->
+<script charset="utf-8" src="assets/scripts/cube-solver.js"></script>
+<script charset="utf-8" src="assets/scripts/game.js"></script>
+
 <script type="text/javascript">
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js")
-            .then(() => {
-                console.log("PWA enabled");
-            });
+(function () {
+    'use strict';
+
+    // --- Prevent mobile pull-to-refresh / scroll gestures globally ---
+    // These work together with CSS overscroll-behavior + touch-action to
+    // fully eliminate the "swipe down = page refresh" problem.
+    document.addEventListener('touchmove', function (e) {
+        // Allow multi-touch (pinch zoom is already disabled via viewport,
+        // but this prevents the browser from interpreting a single-finger
+        // vertical drag as a scroll-to-refresh gesture).
+        if (e.touches.length !== 1) {
+            return;
+        }
+        // 提示面板内部允许正常滚动
+        if (e.target && e.target.closest && e.target.closest('#hintpanel')) {
+            return;
+        }
+        e.preventDefault();
+    }, { passive: false });
+
+    // Prevent double-tap-to-zoom on iOS Safari.
+    // Skip real UI controls so that rapid taps on 打乱/还原 still fire.
+    function isInteractiveTarget(target) {
+        if (!target || !target.closest) {
+            return false;
+        }
+        return !!target.closest('#gamebar, #hintpanel, #winoverlay, button, input, a');
     }
-	function getUrlParam(name) {
-    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
-    var r = window.location.search.substr(1).match(reg);
-    if (r != null) return unescape(r[2]);
-    return null; 
-	}
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function (e) {
+        if (isInteractiveTarget(e.target)) {
+            return;
+        }
+        var now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
 
-	var PETS = [];
-	(function () {
-		const url = 'https://raw.githubusercontent.com/zoo-js/zoo-data/main/json/organizations.json';
-		axios.get(url)
-			.then(function (res) {
-				PETS = res.data.data;
-				['red', 'white', 'blue', 'green', 'orange', 'yellow'].map(color =>{
-					if (getUrlParam(color)) {
-						document.documentElement.style.setProperty('--zoo-'+color, 'url('+getPetUrl(getUrlParam(color)))+')';
-					}
-				})
-			})
-			.catch(function (err) {
-				console.log(err);
-			});
-	})();
+    // --- PWA Service Worker ---
+    if ('serviceWorker' in navigator) {
+        // Use relative path so it works on GitHub Pages subpaths
+        var swPath = 'sw.js';
+        navigator.serviceWorker.register(swPath)
+            .then(function () { console.log('PWA enabled'); })
+            .catch(function (err) { console.warn('SW registration failed:', err); });
+    }
 
-	function getPetUrl(name) {
-		let r = PETS.find(o => o.name === name);
-		return r ? 'https://avatars0.githubusercontent.com/u/'+ r.code +'?s=200&v=4' : name;
-	};
+    // --- URL parameter helper (replaces deprecated unescape) ---
+    function getUrlParam(name) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)');
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURIComponent(r[2]);
+        return null;
+    }
 
-	(function () {
-		if (getUrlParam('bg')) {
-			let bg = getUrlParam('bg')
-			bg = bg.includes('*') ? bg.replace('*', '#') : bg
-			document.documentElement.style.setProperty('--zoo-bg', bg);
-		}
-	}());
+    // --- Pet image system (replaces axios dependency with native fetch) ---
+    var PETS = [];
+
+    function getPetUrl(name) {
+        var r = PETS.find(function (o) { return o.name === name; });
+        return r ? 'https://avatars0.githubusercontent.com/u/' + r.code + '?s=200&v=4' : name;
+    }
+
+    function applyPetImages() {
+        ['red', 'white', 'blue', 'green', 'orange', 'yellow'].forEach(function (color) {
+            var param = getUrlParam(color);
+            if (param) {
+                document.documentElement.style.setProperty(
+                    '--zoo-' + color,
+                    'url(' + getPetUrl(param) + ')'
+                );
+            }
+        });
+    }
+
+    function loadPets() {
+        var url = 'https://raw.githubusercontent.com/zoo-js/zoo-data/main/json/organizations.json';
+
+        // Native fetch (modern browsers)
+        if (window.fetch) {
+            fetch(url)
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    PETS = data.data || [];
+                    applyPetImages();
+                })
+                .catch(function () { applyPetImages(); });
+        } else {
+            // XMLHttpRequest fallback (IE11 etc.)
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            PETS = data.data || [];
+                        } catch (e) {
+                            // ignore parse error
+                        }
+                    }
+                    applyPetImages();
+                }
+            };
+            xhr.send();
+        }
+    }
+
+    // --- Background color from URL ---
+    (function () {
+        var bg = getUrlParam('bg');
+        if (bg) {
+            bg = bg.includes('*') ? bg.replace('*', '#') : bg;
+            document.documentElement.style.setProperty('--zoo-bg', bg);
+        }
+    })();
+
+    // Start loading pet data after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadPets);
+    } else {
+        loadPets();
+    }
+})();
 </script>
 
 </body>
